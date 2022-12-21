@@ -3,6 +3,7 @@
 	<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
 
 	<style>
+		@import url('https://unpkg.com/98.css@0.1.4/build/98.css');
 		@import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300&display=swap');
 		:root {
 			--bg-color: 20, 20, 20;
@@ -10,8 +11,8 @@
 		}
 
 		body {
-		  font-family: 'Readex Pro', sans-serif;
-		  color: white;
+		  font-family: 'Microsoft Sans Serif', sans-serif;
+		  color: black;
 		  font-size: 26px;
 		  overflow: hidden;
 		}
@@ -19,79 +20,19 @@
 		#wrapper {
 		  position: absolute;
 		  z-index: 1;
-		  left: calc(100vw - 500px);
+		  left: calc(100vw - 400px);
 		  top: 30px;
-		  width: 500px;
-		  height: 100px;
+		  width: 1520px;
+		  height: 1890px;
 		  text-align: left;
 		  overflow: hidden;
 		}
 
-		#alert-box {
-		  background-color: rgba(var(--bg-color), var(--opacity));
-		  position: relative;
-		  left: 100%;
-		  border-bottom-left-radius: 10px;
-		  border-top-left-radius: 10px;
-		  margin: auto;
-		  height: 100px;
-		  display: grid;
-		  grid-template-areas: "avatar text";
-		  grid-template-columns: .25fr 1fr;
-		  grid-template-rows: 1fr;
-		  justify-content: center;
-		  align-content: center;
-		  align-items: center;
-		}
-
-		#icon {
-		  width: 80px;
-		  height: auto;
-		  grid-area: avatar;
-		  margin: auto;
-		  position: relative;
-		  animation: icon-bounce .5s infinite;
-		}
-
-		#text {
-		  grid-area: text;
-		}
-
-		.animated-letter {
-		  animation-name: text-bounce;
-		  animation-duration: .5s;
-		  animation-iteration-count: infinite;
-		  display: inline-block;
-		  animation-fill-mode: both;
-		  color: #aa55aa;
-		  position: relative;
-		}
-
-		.animated-letter:nth-child(1n) {
-		  animation-delay: 0s;
-		}
-
-		.animated-letter:nth-child(2n) {
-		  animation-delay: 0.1s;
-		}
-
-		.animated-letter:nth-child(3n) {
-		  animation-delay: 0.2s;
-		}
-
-		.animated-letter:nth-child(4n) {
-		  animation-delay: 0.3s;
-		}
-
-		.animated-letter:nth-child(5n) {
-		  animation-delay: 0.4s;
-		}
-
 		#chat-box {
 			position: absolute;
-			height: calc(100vh - 150px);
-			width: 300px;
-			left: calc(100vw - 300px);
+			height: 00vh;
+			width: 400px;
+			left: calc(100vw - 400px);
 			top: 150px;
 			display: flex;
 			flex-direction: column;
@@ -100,15 +41,10 @@
 			overflow: hidden;
 		}
 
-		.message {
-			background-color: rgba(var(--bg-color), var(--opacity));
-			border-radius: 5px;
-			box-sizing: border-box;
-			margin: 0 2px 5px 2px;
-			position: relative;
-			padding: 10px;
-			font-size: 16px;
+		#alertWindow {
+			display: none;
 		}
+
 
 		.message .badge {
 			margin: 0 5px;
@@ -123,6 +59,17 @@
 		  position: absolute;
 		  z-index: 0;
 		}
+
+		.window-boody #window-icon {
+			display: inline;
+			height: 48px;
+		}
+
+		.window-body #window-text {
+			display: inline;
+			line-height: 48px;
+		}
+
 
 		@keyframes hide {
 			0% {
@@ -186,6 +133,18 @@
 			return found;
 		}
 
+		const ALERTTYPES = {
+			FOLLOW: "Neuer Follower!",
+			HOST: "Host",
+			RAID: "RAID!1!1! ALAAARM!",
+			SUB: "Neuer Sub!",
+			SUB_GIFT: "Sub verschenkt",
+			RESUB: "Resub",
+			CHEER: "Applaus, Applaus, Applaus!",
+			GOAL_PROGRESS: "Ziel-Fortschritt",
+			GOAL_END: "Ziel erreicht!"
+		}
+
 		const SOUNDS = {
 			FOLLOW: new Audio('follow.wav'),
 			HOST: new Audio('host.wav'),
@@ -216,8 +175,8 @@
 		.catch(console.error);
 
 		const emote_url = `https://static-cdn.jtvnw.net/emoticons/v2/:id/default/light/2.0`;
-		const wHeight = window.innerHeight;
-		const wWidth = window.innerWidth;
+		const windowHeight = window.innerHeight;
+		const windowWidth = window.innerWidth;
 		const emotes = new Map();
 		const vars = {
 			user_limit: 5
@@ -225,10 +184,13 @@
 
 		$(document).ready(function() {
 			const socket = io(`%WS_URL%/notifs`);
-			const e_event = document.querySelector('#event-text');
-			const e_img = document.querySelector('#icon');
-			const e_alertbox = document.querySelector('#alert-box');
+			const _titletext = document.querySelector('#title-text');
+			const _icon = document.querySelector('#window-icon');
+			const _alertwindow = document.querySelector('#alertWindow');
+			const _alertwindowtext = document.querySelector('#window-text');
 			const e_chatbox = document.querySelector('#chat-box');
+			const _currentviewers = document.querySelector('#currentViewers');
+
 			socket.on('connect', () => console.log('socket connect'))
 
 			socket.on('vars', data => {
@@ -240,45 +202,29 @@
 				if(data.type) {
 					switch(data.type) {
 						case 'channel.follow':
-							e_event.innerHTML = `${animateText(data.event.user_name)} followed!`;
-							e_img.src = IMAGES.FOLLOW;
-							SOUNDS.FOLLOW.play();
+							alertMessage = data.event.user_name + " folgt dem Kanal!";
+							displayAlertBoxAtRandomPosition(alertMessage, ALERTTYPES.FOLLOW)
+							playSoundForAlertType(ALERTTYPES.FOLLOW);
 							break;
 						case 'channel.raid':
-							e_event.innerHTML = 
-								animateText(data.event.from_broadcaster_user_name) +
-								' raided with<br><strong>' +
-								animateText(data.event.viewers.toString()) +
-								"</strong> viewers!";
-							e_img.src = IMAGES.RAID;
-							SOUNDS.RAID.play();
+							alertMessage = data.event.from_broadcaster_user_name + " raidet mit " + data.event.viewers.toString() + "Menschis!";
+							displayAlertBoxAtRandomPosition(alertMessage, ALERTTYPES.RAID);
+							playSoundForAlertType(ALERTTYPES.RAID);
 							break;
 						case 'host':
-							e_event.innerHTML = 
-								animateText(data.event.username) +
-								' hosted with<br><strong>' +
-								animateText(data.event.viewers.toString()) +
-								"</strong> viewers!";
-							e_img.src = IMAGES.HOST;
-							SOUNDS.HOST.play();
+							alertMessage = data.event.username + " hostet mit " + data.event.viewers.toString() + " Menschis!"
+							displayAlertBoxAtRandomPosition(alertMessage, ALERTTYPES.HOST);
+							playSoundForAlertType(ALERTTYPES.HOST);
 							break;
 						case 'channel.subscribe':
-							e_event.innerHTML = 
-								animateText(data.event.user_name) +
-								' subbed at <br>tier <strong>' +
-								animateText((data.event.tier / 1000).toString()) +
-								"</strong>!";
-							e_img.src = IMAGES.SUB;
-							SOUNDS.SUB.play();
+							alertMessage = data.event.user_name + " subbt mit Level " + (data.event.tier / 1000).toString() + "!";
+							displayAlertBoxAtRandomPosition(alertMessage, ALERTTYPES.SUB);
+							playSoundForAlertType(ALERTTYPES.SUB);
 							break;
 						case 'channel.subscription.gift':
-							e_event.innerHTML = 
-								animateText(data.event.user_name || "Anonymous") +
-								' gifted<br><strong>' +
-								animateText(data.event.total.toString()) +
-								"</strong> subs!";
-							e_img.src = IMAGES.SUB_GIFT;
-							SOUNDS.SUB_GIFT.play();
+							alertMessage = (data.event.user_name || "Anonymous") + " schenkt " + data.event.total.toString() + " Subs!";
+							displayAlertBoxAtRandomPosition(alertMessage, ALERTTYPES.SUB_GIFT);
+							displaySoundForAlertType(ALERTTYPES.SUB_GIFT);
 							break;
 						case 'channel.subscription.message':
 							e_event.innerHTML = 
@@ -328,12 +274,46 @@
 							return;
 					}
 					
-					e_alertbox.style.animation = 'show .5s forwards';
-					setTimeout(() => {
-						e_alertbox.style.animation = 'hide .5s forwards';
-					}, 4500)
+					
 				}
 			});
+
+			function displayAlertBoxAtRandomPosition(alertMessage, alertType) {
+				// fill window with necessary information
+				_titletext.innerHTML = alertType;
+				var img = document.createElement('img');
+				img.src = IMAGES[ALERTTYPES[alertType]];
+				_icon.appendChild(img);
+				_alertwindowtext.innerHTML = alertMessage;
+
+				// set random position for window
+				_alertwindow.style.left = rand(0, windowWidth) + "px";
+				_alertwindow.style.top = rand(0, windowHeight) + "px";
+
+				$("#alertWindow").animate({
+					opacity: 1}, 10, "linear", function() {
+						$("#alertWindow").animate({opacity: 0}).delay(5000);
+					});
+				
+				img.remove();
+			}
+
+			function updateViewerCount() {
+				// set auth header
+
+				// send http request
+				xhttp.open("GET", "ajax_info.txt", true);
+				xhttp.send();
+				document.getElementById("demo").innerHTML = xhttp.responseText; 
+
+				// parse json and get data[0]."viewer_count"
+				_currentviewers.innerHTML = "";
+			}
+
+			function displaySoundForAlertType(alertType) {
+				var alertKey = ALERTTYPES[alertType];
+				SOUNDS.alertKey.play();
+			}
 
 			function handleChat(event) {
 				var { message, user, state: { id, badges, emotes, color }} = event;
@@ -367,7 +347,7 @@
 					user +
 					`</strong></span>`;
 
-				var msg = document.createElement('div');
+				var msg = document.createElement('li');
 				msg.id = `msg-${id}`;
 				msg.classList.add('message');
 				msg.innerHTML = (
@@ -388,24 +368,17 @@
 			}
 		})
 		
-		function animateText(s) {
-		    let arr = s.split('');
-		    arr = arr.map((l) => {
-		        return `<span class="animated-letter">${l}</span>`
-		    });
-		    return `<strong>${arr.join('')}</strong>`;
-		}
 
 		function animateEmoji(e, u, id) {
 			var src = emote_url.replace(':id', e);
 			var start = {
-				left: rand(0, wWidth),
-				top: rand(0, wHeight)
+				left: rand(0, windowWidth),
+				top: rand(0, windowHeight)
 			}
 
 			var end = {
-				left: rand(0, wWidth),
-				top: rand(0, wHeight),
+				left: rand(0, windowWidth),
+				top: rand(0, windowHeight),
 				opacity: 0
 			}
 
@@ -433,17 +406,34 @@
 			)
 		}
 
-		function rand(min, max) { return Math.floor(Math.random() * (max - min) + min); }
+		function rand(min, max) { 
+			return Math.floor(Math.random() * (max - min) + min); 
+		}
+
 	</script>
 </head>
 <body>
-	<div id="chat-box"></div>
-	<div id="wrapper">
-		<div id="alert-box">
-			<img id="icon" src=''>
-			<div id="text">
-				<span id="event-text"></span>
+	<div id="chat-box">
+		<div class="window-body">
+			<ul class="tree-view" id="chatmessages">
+			</ul>
+			<div class="status-bar">
+			<p class="status-bar-field" id="currentViewers"></p>
 			</div>
 		</div>
+	</div>
+	<div id="wrapper">
+		<div class="window" id="alertWindow" style="margin: 32px; width: 250px">
+			<div class="title-bar">
+			  <div class="title-bar-text"><span id="title-text"></span></div>
+			  <div class="title-bar-controls">
+				<button aria-label="Close"></button>
+			  </div>
+			</div>
+			<div class="window-body">
+				<div id="window-icon"></div>
+			  <p id="window-text"></p>
+			</div>
+		  </div>
 	</div>
 </body>
