@@ -9,7 +9,7 @@ app.use(express.json());
 
 const { Server } = require('socket.io');
 const io = new Server(app.listen(process.env.PORT || 8080), {
-	cors: { origin: '*' }
+	cors: { origin: "*" }
 });
 const appNsp = io.of('/notifs');
 
